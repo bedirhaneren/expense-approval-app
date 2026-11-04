@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: masraf-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: masraf
+      POSTGRES_PASSWORD: masraf
+      POSTGRES_DB: masraf
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U masraf -d masraf"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

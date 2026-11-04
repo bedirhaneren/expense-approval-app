@@ -1,0 +1,13 @@
+{
+  "name": "masraf-bildirim",
+  "private": true,
+  "description": "Masraf bildirim ve onay SaaS uygulaması (Next.js + NestJS + PostgreSQL)",
+  "scripts": {
+    "install:all": "npm --prefix apps/api install && npm --prefix apps/web install",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "dev:api": "npm --prefix apps/api run start:dev",
+    "dev:web": "npm --prefix apps/web run dev",
+    "test": "npm --prefix apps/api test"
+  }
+}
