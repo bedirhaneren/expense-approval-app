@@ -97,11 +97,13 @@ Diğer tüm geçişler → `409 Conflict` (geçersiz durum) veya `403 Forbidden`
 - **Çıktı:** `docker compose up db` ile Postgres ayakta, API ve Web boş sayfa açıyor
 
 ### Adım 2 — Veritabanı ve seed (~1 saat)
-- [ ] Prisma kurulumu, `schema.prisma` (Bölüm 1'deki model)
-- [ ] İlk migration
-- [ ] `prisma/seed.ts`: Ali, Veli (manager = Ahmet), Ahmet (MANAGER), Ayşe (ACCOUNTING); demo şifre `Demo123!` (bcrypt)
-- [ ] Seed idempotent olsun (`upsert`)
-- **Çıktı:** `npx prisma migrate deploy && npx prisma db seed` ile 4 kullanıcı hazır
+- [x] Prisma 7.10.1 kurulumu (`@prisma/adapter-pg` sürücüsüyle), `prisma.config.ts`, `schema.prisma`
+- [x] Tablolar `snake_case` (`users`, `expenses`, `expense_history`); kodda `camelCase`
+- [x] İlk migration + veritabanı seviyesinde `CHECK (amount > 0)` kısıtı
+- [x] `prisma/seed.ts`: Ali, Veli (manager = Ahmet), Ahmet (MANAGER), Ayşe (ACCOUNTING); demo şifre `Demo123!` (bcrypt)
+- [x] Seed idempotent (`upsert`)
+- [x] NestJS'te global `PrismaModule` / `PrismaService`
+- **Çıktı:** `npm run db:setup` ile 4 kullanıcı hazır; veriler container yeniden başlatılınca korunuyor
 
 ### Adım 3 — Auth modülü (~1 saat)
 - [ ] `AuthModule`: `POST /auth/login` (username veya email kabul eder), `GET /auth/me`
@@ -189,7 +191,7 @@ Diğer tüm geçişler → `409 Conflict` (geçersiz durum) veya `403 Forbidden`
 | Adım | Durum |
 |---|---|
 | 1. İskelet | ✅ |
-| 2. DB + Seed | ⬜ |
+| 2. DB + Seed | ✅ |
 | 3. Auth | ⬜ |
 | 4. Masraf + İş kuralları | ⬜ |
 | 5. Testler | ⬜ |
