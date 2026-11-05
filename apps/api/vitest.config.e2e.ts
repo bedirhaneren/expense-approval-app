@@ -6,6 +6,9 @@ export default defineConfig({
     globals: true,
     root: './',
     include: ['**/*.e2e-spec.ts'],
-    setupFiles: ['dotenv/config'],
+    globalSetup: ['./test/global-setup.ts'],
+    setupFiles: ['./test/setup-env.ts'],
+    // Test files share one database, so they run one at a time.
+    fileParallelism: false,
   },
 });

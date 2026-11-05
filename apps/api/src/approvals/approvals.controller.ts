@@ -1,0 +1,60 @@
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+} from '@nestjs/common';
+import type { AuthUser } from '../auth/auth.types.js';
+import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
+import { Roles } from '../auth/decorators/roles.decorator.js';
+import type {
+  ExpenseDetail,
+  ExpenseSummary,
+} from '../expenses/expense.types.js';
+import { ParseExpenseIdPipe } from '../expenses/parse-expense-id.pipe.js';
+import { Role } from '../generated/prisma/client.js';
+import { ApprovalsService } from './approvals.service.js';
+import { RejectExpenseDto } from './dto/reject-expense.dto.js';
+import { ParseReviewStagePipe, ReviewStage } from './review-stage.js';
+
+/**
+ * Serves /approvals/manager and /approvals/accounting. The guard admits both
+ * reviewer roles; the service then checks that the role matches the stage.
+ */
+@Roles(Role.MANAGER, Role.ACCOUNTING)
+@Controller('approvals/:stage')
+export class ApprovalsController {
+  constructor(private readonly approvals: ApprovalsService) {}
+
+  @Get()
+  listPending(
+    @Param('stage', ParseReviewStagePipe) stage: ReviewStage,
+    @CurrentUser() reviewer: AuthUser,
+  ): Promise<ExpenseSummary[]> {
+    return this.approvals.listPending(stage, reviewer);
+  }
+
+  @Post(':id/approve')
+  @HttpCode(HttpStatus.OK)
+  approve(
+    @Param('stage', ParseReviewStagePipe) stage: ReviewStage,
+    @Param('id', ParseExpenseIdPipe) id: string,
+    @CurrentUser() reviewer: AuthUser,
+  ): Promise<ExpenseDetail> {
+    return this.approvals.approve(stage, id, reviewer);
+  }
+
+  @Post(':id/reject')
+  @HttpCode(HttpStatus.OK)
+  reject(
+    @Param('stage', ParseReviewStagePipe) stage: ReviewStage,
+    @Param('id', ParseExpenseIdPipe) id: string,
+    @Body() { reason }: RejectExpenseDto,
+    @CurrentUser() reviewer: AuthUser,
+  ): Promise<ExpenseDetail> {
+    return this.approvals.reject(stage, id, reviewer, reason);
+  }
+}
