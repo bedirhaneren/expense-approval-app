@@ -24,7 +24,8 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "test:e2e:cov": "vitest run --config ./vitest.config.e2e.ts --coverage"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",

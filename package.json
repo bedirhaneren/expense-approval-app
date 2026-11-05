@@ -8,8 +8,7 @@
     "db:down": "docker compose down",
     "dev:api": "npm --prefix apps/api run start:dev",
     "dev:web": "npm --prefix apps/web run dev",
-    "test": "npm --prefix apps/api test",
-    "db:setup": "npm --prefix apps/api run db:deploy && npm --prefix apps/api run db:seed",
-    "test:e2e": "npm --prefix apps/api run test:e2e"
+    "test": "npm --prefix apps/api test && npm --prefix apps/api run test:e2e",
+    "db:setup": "npm --prefix apps/api run db:deploy && npm --prefix apps/api run db:seed"
   }
 }
