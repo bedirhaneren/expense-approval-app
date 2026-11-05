@@ -41,6 +41,18 @@ export function toExpenseData(form: ExpenseFormDto) {
 }
 
 export function toExpenseSummary(record: ExpenseSummaryRecord): ExpenseSummary {
+  return summaryFields(record);
+}
+
+export function toExpenseDetail(record: ExpenseDetailRecord): ExpenseDetail {
+  return {
+    ...summaryFields(record),
+    history: record.history.map(toHistoryEntry),
+  };
+}
+
+/** Plain object shared by the summary and detail responses. */
+function summaryFields(record: ExpenseSummaryRecord) {
   return {
     id: record.id,
     title: record.title,
@@ -54,13 +66,6 @@ export function toExpenseSummary(record: ExpenseSummaryRecord): ExpenseSummary {
     rejectedBy: record.rejectedBy,
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,
-  };
-}
-
-export function toExpenseDetail(record: ExpenseDetailRecord): ExpenseDetail {
-  return {
-    ...toExpenseSummary(record),
-    history: record.history.map(toHistoryEntry),
   };
 }
 

@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEnum,
   IsISO8601,
@@ -19,12 +20,14 @@ export const MAX_EXPENSE_AMOUNT = 1_000_000;
 
 /** Used for both creating and editing a draft; editing replaces all fields. */
 export class ExpenseFormDto {
+  /** Masraf başlığı */
   @Trim()
   @IsString({ message: 'Başlık metin olmalıdır.' })
   @IsNotEmpty({ message: 'Başlık zorunludur.' })
   @MaxLength(200, { message: 'Başlık en fazla 200 karakter olabilir.' })
   title: string;
 
+  /** Masraf tarihi, YYYY-MM-DD; Türkiye saatine göre bugünden ileri olamaz */
   @Matches(DATE_ONLY_PATTERN, {
     message: 'Masraf tarihi YYYY-AA-GG biçiminde olmalıdır.',
   })
@@ -48,8 +51,16 @@ export class ExpenseFormDto {
   @Max(MAX_EXPENSE_AMOUNT, {
     message: `Tutar en fazla ${MAX_EXPENSE_AMOUNT.toLocaleString('tr-TR')} TL olabilir.`,
   })
+  // The Swagger plugin turns @IsPositive into minimum: 1, which is wrong here.
+  @ApiProperty({
+    description: 'TL cinsinden tutar, en fazla 2 ondalık basamak',
+    minimum: 0.01,
+    maximum: MAX_EXPENSE_AMOUNT,
+    example: 750,
+  })
   amount: number;
 
+  /** İsteğe bağlı açıklama */
   @IsOptional()
   @Trim()
   @IsString({ message: 'Not metin olmalıdır.' })

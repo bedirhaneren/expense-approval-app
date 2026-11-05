@@ -1,0 +1,1142 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "description": "Aynı hesaba 1 dakika içinde 10 hatalı denemeden sonra hesap 1 dakika kilitlenir. Başarılı giriş sayacı sıfırlar.",
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "İstek gövdesi geçersiz (doğrulama hataları)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Giriş yapılmamış veya oturum geçersiz",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Aynı hesap için çok fazla giriş denemesi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Kullanıcı adı veya e-posta ile giriş yapar, erişim token’ı döner",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "operationId": "AuthController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthUser"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Giriş yapılmamış veya oturum geçersiz",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Giriş yapmış kullanıcının bilgilerini döner",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "HealthController_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Uygulama ve veritabanı ayakta mı? (Docker healthcheck)",
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/expenses": {
+      "get": {
+        "operationId": "ExpensesController_listMine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExpenseSummary"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Giriş yapılmamış veya oturum geçersiz",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Kullanıcının rolü bu işleme izin vermiyor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Çalışanın kendi masraflarını listeler (yeniden eskiye)",
+        "tags": [
+          "Expenses"
+        ]
+      },
+      "post": {
+        "operationId": "ExpensesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenseFormDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "İstek gövdesi geçersiz (doğrulama hataları)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Giriş yapılmamış veya oturum geçersiz",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Kullanıcının rolü bu işleme izin vermiyor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Taslak masraf oluşturur",
+        "tags": [
+          "Expenses"
+        ]
+      }
+    },
+    "/expenses/{id}": {
+      "get": {
+        "description": "Tüm roller kullanabilir; her rol sadece kendi kapsamındaki masrafları görür.",
+        "operationId": "ExpensesController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Giriş yapılmamış veya oturum geçersiz",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Masraf yok veya kullanıcının kapsamı dışında",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Masraf detayını ve işlem geçmişini döner",
+        "tags": [
+          "Expenses"
+        ]
+      },
+      "put": {
+        "description": "Sadece masraf sahibi ve sadece taslak durumunda.",
+        "operationId": "ExpensesController_updateDraft",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpenseFormDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "İstek gövdesi geçersiz (doğrulama hataları)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Giriş yapılmamış veya oturum geçersiz",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Kullanıcının rolü bu işleme izin vermiyor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Masraf yok veya kullanıcının kapsamı dışında",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Masrafın mevcut durumu bu işleme uygun değil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Taslağı günceller (tüm form alanları gönderilir)",
+        "tags": [
+          "Expenses"
+        ]
+      }
+    },
+    "/expenses/{id}/submit": {
+      "post": {
+        "operationId": "ExpensesController_submit",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Giriş yapılmamış veya oturum geçersiz",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Kullanıcının rolü bu işleme izin vermiyor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Masraf yok veya kullanıcının kapsamı dışında",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Masrafın mevcut durumu bu işleme uygun değil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Taslağı yönetici onayına gönderir",
+        "tags": [
+          "Expenses"
+        ]
+      }
+    },
+    "/approvals/{stage}": {
+      "get": {
+        "operationId": "ApprovalsController_listPending",
+        "parameters": [
+          {
+            "name": "stage",
+            "required": true,
+            "in": "path",
+            "description": "manager: yönetici (ahmet), accounting: muhasebe (ayse)",
+            "schema": {
+              "enum": [
+                "manager",
+                "accounting"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExpenseSummary"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Giriş yapılmamış veya oturum geçersiz",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Kullanıcının rolü bu işleme izin vermiyor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Bu aşamada onay bekleyen masrafları listeler",
+        "tags": [
+          "Approvals"
+        ]
+      }
+    },
+    "/approvals/{stage}/{id}/approve": {
+      "post": {
+        "description": "Yönetici: Muhasebe Onayı Bekliyor durumuna geçirir. Muhasebe: Onaylandı (son durum).",
+        "operationId": "ApprovalsController_approve",
+        "parameters": [
+          {
+            "name": "stage",
+            "required": true,
+            "in": "path",
+            "description": "manager: yönetici (ahmet), accounting: muhasebe (ayse)",
+            "schema": {
+              "enum": [
+                "manager",
+                "accounting"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Giriş yapılmamış veya oturum geçersiz",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Kullanıcının rolü bu işleme izin vermiyor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Masraf yok veya kullanıcının kapsamı dışında",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Masrafın mevcut durumu bu işleme uygun değil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Masrafı onaylar",
+        "tags": [
+          "Approvals"
+        ]
+      }
+    },
+    "/approvals/{stage}/{id}/reject": {
+      "post": {
+        "operationId": "ApprovalsController_reject",
+        "parameters": [
+          {
+            "name": "stage",
+            "required": true,
+            "in": "path",
+            "description": "manager: yönetici (ahmet), accounting: muhasebe (ayse)",
+            "schema": {
+              "enum": [
+                "manager",
+                "accounting"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectExpenseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpenseDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "İstek gövdesi geçersiz (doğrulama hataları)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Giriş yapılmamış veya oturum geçersiz",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Kullanıcının rolü bu işleme izin vermiyor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Masraf yok veya kullanıcının kapsamı dışında",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Masrafın mevcut durumu bu işleme uygun değil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Masrafı gerekçeyle reddeder (Reddedildi, son durum)",
+        "tags": [
+          "Approvals"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Masraf Bildirim API",
+    "description": "Masraf bildirim ve onay API'si.\n\n**Akış:** Taslak → Yönetici Onayı Bekliyor → Muhasebe Onayı Bekliyor → Onaylandı\n(yönetici veya muhasebe reddederse → Reddedildi).\n\n**Kimlik doğrulama:** `POST /auth/login` ile alınan token, `Authorization: Bearer <token>` başlığıyla gönderilir.\nDemo kullanıcılar: ali, veli (çalışan), ahmet (yönetici), ayse (muhasebe); şifre `Demo123!`.\n\n**Görünürlük:** Her kullanıcı sadece kendi kapsamındaki masrafları görür. Kapsam dışındaki bir masraf,\nvarlığını sızdırmamak için 403 yerine **404** döner.",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "login": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "login",
+          "password"
+        ]
+      },
+      "AuthUser": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "EMPLOYEE",
+              "MANAGER",
+              "ACCOUNTING"
+            ],
+            "type": "string"
+          },
+          "managerId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "email",
+          "fullName",
+          "role",
+          "managerId"
+        ]
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "Bearer token, 8 saat geçerli"
+          },
+          "user": {
+            "$ref": "#/components/schemas/AuthUser"
+          }
+        },
+        "required": [
+          "accessToken",
+          "user"
+        ]
+      },
+      "ApiErrorResponse": {
+        "type": "object",
+        "properties": {}
+      },
+      "PersonSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fullName"
+        ]
+      },
+      "ExpenseSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "expenseDate": {
+            "type": "string",
+            "description": "Masraf tarihi, YYYY-MM-DD"
+          },
+          "category": {
+            "enum": [
+              "TRANSPORT",
+              "MEAL",
+              "ACCOMMODATION",
+              "OTHER"
+            ],
+            "type": "string"
+          },
+          "amount": {
+            "type": "string",
+            "description": "İki ondalıklı metin olarak tutar, örn. \"750.00\" (kayan nokta hatası olmaması için)"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "PENDING_MANAGER",
+              "PENDING_ACCOUNTING",
+              "APPROVED",
+              "REJECTED"
+            ],
+            "type": "string"
+          },
+          "owner": {
+            "$ref": "#/components/schemas/PersonSummary"
+          },
+          "rejectionReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "rejectedBy": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PersonSummary"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "expenseDate",
+          "category",
+          "amount",
+          "note",
+          "status",
+          "owner",
+          "rejectionReason",
+          "rejectedBy",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "HistoryActor": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "EMPLOYEE",
+              "MANAGER",
+              "ACCOUNTING"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "fullName",
+          "role"
+        ]
+      },
+      "ExpenseHistoryEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "CREATED",
+              "UPDATED",
+              "SUBMITTED",
+              "MANAGER_APPROVED",
+              "MANAGER_REJECTED",
+              "ACCOUNTING_APPROVED",
+              "ACCOUNTING_REJECTED"
+            ]
+          },
+          "fromStatus": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "DRAFT",
+              "PENDING_MANAGER",
+              "PENDING_ACCOUNTING",
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "toStatus": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "PENDING_MANAGER",
+              "PENDING_ACCOUNTING",
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Red gerekçesi (sadece red işlemlerinde)"
+          },
+          "actor": {
+            "$ref": "#/components/schemas/HistoryActor"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "fromStatus",
+          "toStatus",
+          "reason",
+          "actor",
+          "createdAt"
+        ]
+      },
+      "ExpenseDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "expenseDate": {
+            "type": "string",
+            "description": "Masraf tarihi, YYYY-MM-DD"
+          },
+          "category": {
+            "enum": [
+              "TRANSPORT",
+              "MEAL",
+              "ACCOMMODATION",
+              "OTHER"
+            ],
+            "type": "string"
+          },
+          "amount": {
+            "type": "string",
+            "description": "İki ondalıklı metin olarak tutar, örn. \"750.00\" (kayan nokta hatası olmaması için)"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "DRAFT",
+              "PENDING_MANAGER",
+              "PENDING_ACCOUNTING",
+              "APPROVED",
+              "REJECTED"
+            ],
+            "type": "string"
+          },
+          "owner": {
+            "$ref": "#/components/schemas/PersonSummary"
+          },
+          "rejectionReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "rejectedBy": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PersonSummary"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "history": {
+            "description": "İşlem geçmişi, eskiden yeniye",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExpenseHistoryEntry"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "expenseDate",
+          "category",
+          "amount",
+          "note",
+          "status",
+          "owner",
+          "rejectionReason",
+          "rejectedBy",
+          "createdAt",
+          "updatedAt",
+          "history"
+        ]
+      },
+      "ExpenseFormDto": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "maximum": 1000000,
+            "minimum": 0.01,
+            "description": "TL cinsinden tutar, en fazla 2 ondalık basamak",
+            "example": 750
+          },
+          "title": {
+            "type": "string",
+            "description": "Masraf başlığı",
+            "maxLength": 200
+          },
+          "expenseDate": {
+            "type": "string",
+            "description": "Masraf tarihi, YYYY-MM-DD; Türkiye saatine göre bugünden ileri olamaz"
+          },
+          "category": {
+            "enum": [
+              "TRANSPORT",
+              "MEAL",
+              "ACCOMMODATION",
+              "OTHER"
+            ],
+            "type": "string"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true,
+            "description": "İsteğe bağlı açıklama",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "amount",
+          "title",
+          "expenseDate",
+          "category"
+        ]
+      },
+      "RejectExpenseDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      }
+    }
+  }
+}
