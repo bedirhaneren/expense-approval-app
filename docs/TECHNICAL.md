@@ -104,6 +104,13 @@ ACCOUNTING → status ∈ {PENDING_ACCOUNTING, APPROVED}
 ```
 Bu filtre **güncelleme sorgularında da** kullanılır. Birisi ID'yi tahmin edip başka birinin masrafını değiştirmeye çalışsa bile sorgu o kaydı hiç bulamaz.
 
+### Hatalı giriş sınırı
+`LoginAttemptLimiter`, bir hesaba 1 dakika içinde yapılan **hatalı** girişleri sayar. 10 hatadan sonra o hesap için giriş 1 dakika boyunca 429 döner.
+- **IP'ye göre değil, hesaba göre sayılır.** Bütün istekler API'ye Next.js sunucusundan geldiği için IP'ye göre sayılsaydı bütün kullanıcılar tek bir sayaç paylaşırdı.
+- **Sayaç, bulunan kullanıcının kimliğine göre tutulur.** Kullanıcı adı ve e-posta aynı sayacı paylaşır; ikisi arasında geçiş yaparak deneme hakkı artırılamaz.
+- **Başarılı girişler sayılmaz** ve sayacı sıfırlar. Şifresini bilen kullanıcı hiçbir zaman kilitlenmez.
+- Var olmayan kullanıcı adları da aynı şekilde sayılır ve aynı yanıtı alır; böylece sınır üzerinden kullanıcı adı tahmin edilemez.
+
 ### Neden 403 değil de 404?
 Görme yetkisi olmayan bir masraf için "bulunamadı" (404) döner. "Yetkiniz yok" (403) demek, "böyle bir kayıt var ama senin değil" bilgisini sızdırır. Aynı yaklaşım giriş ekranında da var: "kullanıcı yok" ve "şifre yanlış" durumları aynı mesajı ve aynı yanıt süresini döndürür.
 
@@ -201,6 +208,7 @@ Tutar ayrıca veritabanında `CHECK (amount > 0)` ile korunur.
 | 403 | Yanlış rol | "Bu işlem için yetkiniz yok." |
 | 404 | Kayıt yok veya görme yetkisi yok | "Masraf bulunamadı." |
 | 409 | Yanlış işlem sırası | "Masraf "Onaylandı" durumunda olduğu için bu işlem yapılamaz." |
+| 429 | Aynı hesaba çok fazla hatalı giriş | "Çok fazla giriş denemesi yapıldı. Lütfen bir dakika sonra tekrar deneyin." |
 
 Frontend, API'nin doğrulama mesajlarını ilgili form alanının altında gösterir ve kullanıcının girdiği değerleri korur.
 
@@ -219,3 +227,6 @@ Frontend, API'nin doğrulama mesajlarını ilgili form alanının altında göst
 | `apps/api/test/case-scenario.e2e-spec.ts` | Case senaryosunun testi |
 | `apps/web/src/lib/dal.ts` | Frontend veri erişim katmanı |
 | `apps/web/src/app/actions/` | Server Actions |
+| `apps/api/src/auth/login-attempt-limiter.ts` | Hatalı giriş sınırı |
+| `apps/web/e2e/` | Tarayıcı testleri (Playwright) |
+| `docs/openapi.json` | API belgesi (koddan üretilir) |

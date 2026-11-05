@@ -24,6 +24,7 @@ Taslak → Yönetici Onayı Bekliyor → Muhasebe Onayı Bekliyor → Onaylandı
 - [Kullanılan teknolojiler](#kullanılan-teknolojiler)
 - [Kurulum ve çalıştırma](#kurulum-ve-çalıştırma)
 - [Testler](#testler)
+- [API dokümantasyonu](#api-dokümantasyonu)
 - [Proje yapısı](#proje-yapısı)
 - [Varsayımlar](#varsayımlar)
 - [Bilinen eksikler](#bilinen-eksikler)
@@ -111,19 +112,28 @@ npm run dev:web                                   # Web → http://localhost:300
 ## Testler
 
 ```bash
-npm run db:up    # e2e testleri için veritabanı gerekli
-npm test         # unit + e2e testlerin hepsi
+npm run db:up          # API testleri için veritabanı gerekli
+npm test               # API: unit + e2e
+
+npm run docker:up      # tarayıcı testleri çalışan bir uygulamaya karşı koşar
+npm run browser:install                              # ilk seferde bir kez
+npm run test:browser   # gerçek tarayıcıda (Chromium) arayüz testleri
 ```
 
 | Tür | Sayı | Kapsam |
 |---|---|---|
-| Unit | 24 | Durum makinesi, görünürlük kuralları, giriş servisi, rol guard'ı, Türkiye saatiyle tarih kontrolü |
-| E2E | 87 | Case'teki senaryo, yetki matrisi, iş akışı kuralları, form doğrulamaları, eşzamanlı çift onay |
+| API unit | 29 | Durum makinesi, görünürlük kuralları, giriş servisi ve hatalı giriş sınırı, rol guard'ı, Türkiye saatiyle tarih kontrolü |
+| API e2e | 90 | Case senaryosu, yetki matrisi, iş akışı kuralları, form doğrulamaları, eşzamanlı çift onay, hatalı giriş sınırı |
+| Tarayıcı | 9 | Case senaryosu gerçek Chrome'da, yetki yönlendirmeleri, form hata mesajları, taslak düzenleme, mobil görünüm |
 
 - E2E testleri ayrı bir test veritabanında (`masraf_test`) çalışır; geliştirme verisine dokunmaz.
 - Test veritabanına, "yönetici sadece kendi ekibini görür" kuralını doğrulamak için ikinci bir ekip (Zeynep → Can) eklenir.
+- Tarayıcı testleri her çalıştırmada benzersiz veriler oluşturur; dolu bir veritabanında, hatta canlı demoda da çalışabilir: `BASE_URL=https://... npm run test:browser`.
 - Coverage: `npm --prefix apps/api run test:e2e:cov` (API kodu için ~%99 satır, %100 fonksiyon).
-- Her push'ta GitHub Actions lint, tip kontrolü, unit ve e2e testleri çalıştırır ve frontend'i derler.
+- Her push'ta GitHub Actions üç iş çalıştırır:
+  - **API:** lint, tip kontrolü, unit ve e2e testleri, OpenAPI belgesinin güncelliği
+  - **Web:** lint ve build
+  - **Browser:** Docker ile bütün sistem ve Playwright testleri
 
 **Case'te örnek verilen kritik kuralların testleri:**
 | Kural | Test |
@@ -131,7 +141,16 @@ npm test         # unit + e2e testlerin hepsi
 | Çalışan başka kullanıcının kaydını göremez | `test/access-control.e2e-spec.ts` |
 | Muhasebe erken onay veremez | `test/access-control.e2e-spec.ts`, `test/case-scenario.e2e-spec.ts` |
 | Aynı bildirime ikinci kez onay verilemez | `test/workflow-rules.e2e-spec.ts` (eşzamanlı istekler dahil) |
-| Case'in uçtan uca senaryosu (6 adım) | `test/case-scenario.e2e-spec.ts` |
+| Case'in uçtan uca senaryosu (6 adım) | `test/case-scenario.e2e-spec.ts`, tarayıcıda `apps/web/e2e/case-scenario.spec.ts` |
+
+---
+
+## API dokümantasyonu
+
+- **Etkileşimli Swagger arayüzü:** API çalışırken http://localhost:3001/docs (`npm run dev:api`). Sağ üstteki **Authorize** butonuna `POST /auth/login`'den alınan token girilerek istekler denenebilir.
+- **OpenAPI belgesi:** [`docs/openapi.json`](docs/openapi.json). Koddan üretilir (`npm --prefix apps/api run openapi`) ve CI güncel olup olmadığını kontrol eder. Örneğin https://editor.swagger.io adresinde açılabilir.
+
+Bütün uç noktalar, istek ve yanıt şemaları, roller ve olası hata kodları (400, 401, 403, 404, 409, 429) belgelenmiştir. Docker ve canlı ortamda API bilerek dışarıya kapalıdır; bu yüzden Swagger arayüzü yerel geliştirmede kullanılır.
 
 ---
 
@@ -146,14 +165,17 @@ npm test         # unit + e2e testlerin hepsi
 │   │   │   ├── expenses/          ⭐ durum makinesi, görünürlük kuralları, masraf işlemleri
 │   │   │   ├── approvals/         yönetici ve muhasebe onay uç noktaları
 │   │   │   └── common/            ortak doğrulayıcılar ve tarih yardımcıları
-│   │   └── test/                  e2e testleri
+│   │   └── test/                  API e2e testleri
 │   └── web/                       Next.js frontend
 │       └── src/
 │           ├── app/               sayfalar ve Server Actions
 │           ├── components/        arayüz bileşenleri
 │           ├── lib/               API istemcisi, oturum, veri erişim katmanı
 │           └── proxy.ts           oturumsuz ziyaretçiyi girişe yönlendirir
-├── docs/TECHNICAL.md              veri modeli, yetki yaklaşımı, onay akışı
+│       └── e2e/                   tarayıcı testleri (Playwright)
+├── docs/
+│   ├── TECHNICAL.md               veri modeli, yetki yaklaşımı, onay akışı
+│   └── openapi.json               API belgesi
 ├── docker-compose.yml
 └── .github/workflows/ci.yml
 ```
@@ -180,9 +202,8 @@ Case metninin açık bıraktığı konularda verilen kararlar:
 
 ## Bilinen eksikler
 
-- **Frontend için otomatik test repoda yok.** Arayüz akışı (case senaryosu, form hataları, mobil görünüm) geliştirme sırasında Playwright ile gerçek tarayıcıda doğrulandı, ama bu testler repoya eklenmedi. İş kuralları backend'de olduğu için kapsamlı test orada yapıldı.
 - **Listelerde sayfalama, filtreleme ve arama yok.**
-- **Giriş denemelerinde hız sınırlaması (rate limiting) yok.**
+- **Hatalı giriş sayacı bellekte tutulur.** Tek API sunucusu için yeterli; birden fazla sunucuya ölçeklenirse Redis gibi ortak bir depoya taşınmalıdır.
 - **API ve web arasında tipler kopyalanıyor.** Ortak bir paket yerine `apps/web/src/lib/api/types.ts` API'nin yanıt tiplerini tekrar tanımlıyor.
 - **Canlı ortamda yeni migration'lar otomatik uygulanmaz.** Çalışma imajında migration aracı yok ve veritabanı dışarıya kapalı; şema değişikliğinde migration'ın elle çalıştırılması gerekir.
 - **Kapsam dışı bırakılanlar:** fiş/dosya yükleme, e-posta/SMS bildirimi, raporlama, çoklu şirket.
@@ -196,9 +217,13 @@ Case'te zorunlu tutulmayan, ama eklenenler:
 
 - **Eşzamanlı çift onay koruması:** Durum kontrolü güncelleme sorgusunun içinde yapılır. Aynı anda gelen iki onaydan sadece biri başarılı olur; bu bir testle doğrulanır.
 - **Veritabanı seviyesinde kural:** `CHECK (amount > 0)`.
-- **Güvenli giriş:** "Kullanıcı yok" ve "şifre yanlış" durumları aynı mesajı ve aynı süreyi döndürür; kullanıcı adları tahmin edilemez.
+- **Güvenli giriş:**
+  - "Kullanıcı yok" ve "şifre yanlış" durumları aynı mesajı ve aynı süreyi döndürür; kullanıcı adları tahmin edilemez.
+  - Aynı hesaba 1 dakika içinde **10 hatalı** denemeden sonra hesap 1 dakika kilitlenir (429). Kullanıcı adı ve e-posta aynı sayacı paylaşır; başarılı girişler sayılmaz.
 - **Token güvenliği:** API token'ı httpOnly çerezde tutulur; tarayıcı JavaScript'i okuyamaz. Tarayıcı API ile hiç doğrudan konuşmaz. Docker ve canlı ortamda API dışarıya kapalıdır.
-- **CI:** Her push'ta GitHub Actions lint, tip kontrolü, unit ve e2e testleri çalıştırır.
+- **Tarayıcı testleri:** Case senaryosu gerçek Chrome'da Playwright ile test edilir.
+- **API dokümantasyonu:** Swagger arayüzü ve koddan üretilen OpenAPI belgesi.
+- **CI:** Her push'ta lint, tip kontrolü, API testleri, tarayıcı testleri ve OpenAPI güncellik kontrolü çalışır.
 - **Docker ile tek komutta kurulum** ve **canlı demo** (Railway).
 - **Mobil uyumlu arayüz:** Dar ekranlarda tablolar karta dönüşür.
 
