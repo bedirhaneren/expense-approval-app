@@ -6,4 +6,6 @@ export const AuthMessages = {
   SESSION_INVALID:
     'Oturumunuz geçersiz veya süresi dolmuş. Lütfen tekrar giriş yapın.',
   FORBIDDEN_ROLE: 'Bu işlem için yetkiniz yok.',
+  TOO_MANY_LOGIN_ATTEMPTS:
+    'Çok fazla giriş denemesi yapıldı. Lütfen bir dakika sonra tekrar deneyin.',
 } as const;

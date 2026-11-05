@@ -6,6 +6,8 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { AuthMessages } from './auth.constants.js';
 import type { AuthUser, JwtPayload, LoginResponse } from './auth.types.js';
 import type { LoginDto } from './dto/login.dto.js';
+import { LoginAttemptLimiter } from './login-attempt-limiter.js';
+import { normalizeLoginIdentifier } from './login-identifier.js';
 
 const AUTH_USER_SELECT = {
   id: true,
@@ -28,6 +30,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly loginAttempts: LoginAttemptLimiter,
   ) {}
 
   async login({ login, password }: LoginDto): Promise<LoginResponse> {
@@ -49,20 +52,26 @@ export class AuthService {
     login: string,
     password: string,
   ): Promise<AuthUser> {
-    const identifier = login.trim().toLowerCase();
+    const identifier = normalizeLoginIdentifier(login);
     const user = await this.prisma.user.findFirst({
       where: { OR: [{ username: identifier }, { email: identifier }] },
       select: { ...AUTH_USER_SELECT, passwordHash: true },
     });
+
+    // One counter per account, whether it is addressed by username or email.
+    const account = user?.id ?? identifier;
+    this.loginAttempts.assertNotBlocked(account);
 
     const isPasswordValid = await bcrypt.compare(
       password,
       user?.passwordHash ?? DUMMY_PASSWORD_HASH,
     );
     if (!user || !isPasswordValid) {
+      this.loginAttempts.recordFailure(account);
       throw new UnauthorizedException(AuthMessages.INVALID_CREDENTIALS);
     }
 
+    this.loginAttempts.reset(account);
     const { passwordHash: _passwordHash, ...authUser } = user;
     return authUser;
   }

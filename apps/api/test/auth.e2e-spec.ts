@@ -2,6 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types.js';
 import { createTestApp } from './helpers/test-context.js';
+import { MAX_FAILED_LOGINS } from '../src/auth/login-attempt-limiter.js';
 import { DEMO_PASSWORD } from './helpers/test-users.js';
 
 describe('Auth (e2e)', () => {
@@ -101,6 +102,42 @@ describe('Auth (e2e)', () => {
         .set('Authorization', `Bearer ${tamperedToken}`);
 
       expect(response.status).toBe(401);
+    });
+  });
+
+  describe('failed login limit', () => {
+    it('blocks an account after too many failed attempts, by username or email', async () => {
+      for (let i = 0; i < MAX_FAILED_LOGINS; i++) {
+        const failed = await login({ login: 'Veli', password: 'wrong' });
+        expect(failed.status).toBe(401);
+      }
+
+      // Same account addressed by email, now with the correct password.
+      const blocked = await login({
+        login: 'veli@demo.local',
+        password: DEMO_PASSWORD,
+      });
+
+      expect(blocked.status).toBe(429);
+      expect(blocked.body.message).toBe(
+        'Çok fazla giriş denemesi yapıldı. Lütfen bir dakika sonra tekrar deneyin.',
+      );
+    });
+
+    it('never counts successful logins', async () => {
+      for (let i = 0; i < MAX_FAILED_LOGINS + 2; i++) {
+        const response = await login({
+          login: 'ahmet',
+          password: DEMO_PASSWORD,
+        });
+        expect(response.status).toBe(200);
+      }
+    });
+
+    it('does not affect other accounts', async () => {
+      const response = await login({ login: 'ayse', password: DEMO_PASSWORD });
+
+      expect(response.status).toBe(200);
     });
   });
 

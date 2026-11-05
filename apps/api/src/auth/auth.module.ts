@@ -7,6 +7,7 @@ import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
 import { RolesGuard } from './guards/roles.guard.js';
+import { LoginAttemptLimiter } from './login-attempt-limiter.js';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { RolesGuard } from './guards/roles.guard.js';
   controllers: [AuthController],
   providers: [
     AuthService,
+    LoginAttemptLimiter,
     // Order matters: authenticate first, then check roles.
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },

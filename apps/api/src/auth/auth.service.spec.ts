@@ -5,6 +5,7 @@ import { Role } from '../generated/prisma/client.js';
 import type { PrismaService } from '../prisma/prisma.service.js';
 import { AuthMessages } from './auth.constants.js';
 import { AuthService } from './auth.service.js';
+import { LoginAttemptLimiter } from './login-attempt-limiter.js';
 import type { JwtPayload } from './auth.types.js';
 
 const PASSWORD = 'Demo123!';
@@ -23,7 +24,11 @@ describe('AuthService', () => {
   const jwtService = new JwtService({ secret: 'test-secret' });
   const findFirst = vi.fn();
   const prisma = { user: { findFirst } } as unknown as PrismaService;
-  const authService = new AuthService(prisma, jwtService);
+  const authService = new AuthService(
+    prisma,
+    jwtService,
+    new LoginAttemptLimiter(),
+  );
 
   beforeEach(() => {
     findFirst.mockReset();
