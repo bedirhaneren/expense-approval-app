@@ -9,6 +9,8 @@
     "dev:api": "npm --prefix apps/api run start:dev",
     "dev:web": "npm --prefix apps/web run dev",
     "test": "npm --prefix apps/api test && npm --prefix apps/api run test:e2e",
-    "db:setup": "npm --prefix apps/api run db:deploy && npm --prefix apps/api run db:seed"
+    "db:setup": "npm --prefix apps/api run db:deploy && npm --prefix apps/api run db:seed",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down"
   }
 }

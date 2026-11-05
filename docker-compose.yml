@@ -1,7 +1,11 @@
+# One-command demo: `docker compose up --build`, then open http://localhost:3000
+# For local development only the database is needed: `npm run db:up`.
+
+x-database-url: &database-url postgresql://masraf:masraf@db:5432/masraf?schema=public
+
 services:
   db:
     image: postgres:16-alpine
-    container_name: masraf-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: masraf
@@ -17,6 +21,48 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  # Applies migrations and seeds the demo users, then exits.
+  migrate:
+    build:
+      context: ./apps/api
+      target: migrate
+    environment:
+      DATABASE_URL: *database-url
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: ./apps/api
+      target: runtime
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: *database-url
+      # Demo value only. Use a long random secret in any real deployment.
+      JWT_SECRET: docker-demo-secret-change-me
+      PORT: 3001
+      WEB_ORIGIN: http://localhost:3000
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    # Not published: only the web container talks to the API.
+    expose:
+      - "3001"
+
+  web:
+    build:
+      context: ./apps/web
+    restart: unless-stopped
+    environment:
+      API_URL: http://api:3001
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   pgdata:

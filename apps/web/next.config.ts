@@ -5,6 +5,8 @@ import type { NextConfig } from 'next';
  * render on each request. Cache Components is left off on purpose.
  */
 const nextConfig: NextConfig = {
+  // Self-contained server for the Docker image.
+  output: 'standalone',
   turbopack: {
     rules: {
       '*.css': {
