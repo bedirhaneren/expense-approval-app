@@ -11,6 +11,8 @@
     "test": "npm --prefix apps/api test && npm --prefix apps/api run test:e2e",
     "db:setup": "npm --prefix apps/api run db:deploy && npm --prefix apps/api run db:seed",
     "docker:up": "docker compose up --build",
-    "docker:down": "docker compose down"
+    "docker:down": "docker compose down",
+    "test:browser": "npm --prefix apps/web run test:e2e",
+    "browser:install": "npm --prefix apps/web exec playwright install chromium"
   }
 }
