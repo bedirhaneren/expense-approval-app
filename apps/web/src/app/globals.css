@@ -1,26 +1,84 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Design tokens from the "Masraf Bildirim" design system. */
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-canvas: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f1f5f9;
+  --color-border: #e2e8f0;
+  --color-border-strong: #cbd5e1;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-ink: #0f172a;
+  --color-ink-secondary: #475569;
+  --color-ink-muted: #94a3b8;
+
+  --color-primary: #4f46e5;
+  --color-primary-hover: #4338ca;
+  --color-primary-active: #3730a3;
+  --color-primary-soft: #eef2ff;
+  --color-primary-ring: #c7d2fe;
+
+  --color-success: #15803d;
+  --color-success-hover: #166534;
+  --color-danger: #dc2626;
+  --color-danger-strong: #b91c1c;
+  --color-danger-soft: #fef2f2;
+
+  --color-status-draft-bg: #f1f5f9;
+  --color-status-draft-text: #475569;
+  --color-status-draft-border: #e2e8f0;
+  --color-status-manager-bg: #fef3c7;
+  --color-status-manager-text: #b45309;
+  --color-status-manager-border: #fde68a;
+  --color-status-accounting-bg: #dbeafe;
+  --color-status-accounting-text: #1d4ed8;
+  --color-status-accounting-border: #bfdbfe;
+  --color-status-approved-bg: #dcfce7;
+  --color-status-approved-text: #15803d;
+  --color-status-approved-border: #bbf7d0;
+  --color-status-rejected-bg: #fee2e2;
+  --color-status-rejected-text: #b91c1c;
+  --color-status-rejected-border: #fecaca;
+
+  --radius-card: 0.5rem;
+
+  --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.04);
+  --shadow-modal:
+    0 20px 25px -5px rgb(15 23 42 / 0.08), 0 8px 10px -6px rgb(15 23 42 / 0.04);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+/* Money and dates line up in tables. */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Material Symbols icon font; only the icons we use are downloaded.
+   In the components layer so text-* utilities can override the size. */
+@layer components {
+  .icon {
+    font-family: 'Material Symbols Outlined';
+    font-size: 1.25rem;
+    font-weight: normal;
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    direction: ltr;
+    font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+  }
+}
+
+dialog::backdrop {
+  background: rgb(15 23 42 / 0.3);
 }
