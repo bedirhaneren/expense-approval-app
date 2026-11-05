@@ -18,10 +18,13 @@ import {
   EXPENSE_TRANSITIONS,
   type TransitionAction,
 } from './expense-state-machine.js';
-import { toExpenseData } from './expense.mapper.js';
+import {
+  EXPENSE_DETAIL_INCLUDE,
+  toExpenseData,
+  toExpenseDetail,
+} from './expense.mapper.js';
 import { ExpenseMessages } from './expense.messages.js';
 import type { ExpenseDetail } from './expense.types.js';
-import { ExpensesService } from './expenses.service.js';
 
 export interface TransitionCommand {
   expenseId: string;
@@ -50,16 +53,17 @@ interface HistoryEntryInput {
 /**
  * Write side: every change to an expense goes through here, and every change
  * is recorded in the history within the same transaction.
+ *
+ * Each method returns the expense as it stands after the change. It is read
+ * inside the transaction, after the change was authorized, because the actor
+ * may no longer see the expense afterwards (e.g. a manager after approving).
  */
 @Injectable()
 export class ExpenseWorkflowService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly expenses: ExpensesService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async create(form: ExpenseFormDto, owner: AuthUser): Promise<ExpenseDetail> {
-    const expenseId = await this.prisma.$transaction(async (tx) => {
+  create(form: ExpenseFormDto, owner: AuthUser): Promise<ExpenseDetail> {
+    return this.prisma.$transaction(async (tx) => {
       const { id } = await tx.expense.create({
         data: { ...toExpenseData(form), ownerId: owner.id },
         select: { id: true },
@@ -71,18 +75,16 @@ export class ExpenseWorkflowService {
         fromStatus: null,
         toStatus: ExpenseStatus.DRAFT,
       });
-      return id;
+      return loadDetail(tx, id);
     });
-
-    return this.expenses.getVisibleById(expenseId, owner);
   }
 
-  async updateDraft(
+  updateDraft(
     expenseId: string,
     form: ExpenseFormDto,
     owner: AuthUser,
   ): Promise<ExpenseDetail> {
-    await this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx) => {
       await updateIfInStatus(tx, {
         expenseId,
         actor: owner,
@@ -97,12 +99,11 @@ export class ExpenseWorkflowService {
         fromStatus: EDITABLE_STATUS,
         toStatus: EDITABLE_STATUS,
       });
+      return loadDetail(tx, expenseId);
     });
-
-    return this.expenses.getVisibleById(expenseId, owner);
   }
 
-  async transition({
+  transition({
     expenseId,
     action,
     actor,
@@ -111,7 +112,7 @@ export class ExpenseWorkflowService {
     const { from, to, actorRole } = EXPENSE_TRANSITIONS[action];
     assertRole(actor, actorRole);
 
-    await this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx) => {
       await updateIfInStatus(tx, {
         expenseId,
         actor,
@@ -127,9 +128,8 @@ export class ExpenseWorkflowService {
         toStatus: to,
         reason,
       });
+      return loadDetail(tx, expenseId);
     });
-
-    return this.expenses.getVisibleById(expenseId, actor);
   }
 }
 
@@ -160,6 +160,18 @@ async function updateIfInStatus(
     throw new NotFoundException(ExpenseMessages.NOT_FOUND);
   }
   throw new ConflictException(conflictMessage(current.status));
+}
+
+/** Only call after the change has been authorized by `updateIfInStatus`. */
+async function loadDetail(
+  tx: Prisma.TransactionClient,
+  expenseId: string,
+): Promise<ExpenseDetail> {
+  const record = await tx.expense.findUniqueOrThrow({
+    where: { id: expenseId },
+    include: EXPENSE_DETAIL_INCLUDE,
+  });
+  return toExpenseDetail(record);
 }
 
 function rejectionFields(

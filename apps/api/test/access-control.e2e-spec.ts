@@ -54,11 +54,12 @@ describe('Access control (e2e)', () => {
       ['veli', 'aliPendingManager', 404],
       ['can', 'aliPendingManager', 404],
 
-      // Managers see their own team's submitted expenses, never drafts.
+      // Managers see only their own team's expenses that wait for them.
       ['ahmet', 'aliDraft', 404],
       ['ahmet', 'aliPendingManager', 200],
-      ['ahmet', 'aliManagerRejected', 200],
-      ['ahmet', 'aliApproved', 200],
+      ['ahmet', 'aliManagerRejected', 404],
+      ['ahmet', 'aliPendingAccounting', 404],
+      ['ahmet', 'aliApproved', 404],
       ['ahmet', 'canPendingManager', 404],
       ['zeynep', 'canPendingManager', 200],
       ['zeynep', 'aliPendingManager', 404],

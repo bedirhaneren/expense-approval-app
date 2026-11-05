@@ -57,13 +57,15 @@ describe('Workflow rules (e2e)', () => {
   });
 
   describe('manager stage', () => {
+    // A manager only sees expenses that wait for them (case 3.1), so once an
+    // expense leaves their stage it is reported as not found.
     it('the manager cannot act again after approving', async () => {
       const id = await createExpenseAt(ctx, 'pendingAccounting');
       const url = `/approvals/manager/${id}`;
 
-      expect((await ctx.as('ahmet').post(`${url}/approve`)).status).toBe(409);
+      expect((await ctx.as('ahmet').post(`${url}/approve`)).status).toBe(404);
       expect((await ctx.as('ahmet').post(`${url}/reject`, reason)).status).toBe(
-        409,
+        404,
       );
     });
 
@@ -74,7 +76,20 @@ describe('Workflow rules (e2e)', () => {
         .as('ahmet')
         .post(`/approvals/manager/${id}/approve`);
 
-      expect(response.status).toBe(409);
+      expect(response.status).toBe(404);
+    });
+
+    it('returns the result of an approval, after which the manager no longer sees the expense', async () => {
+      const id = await createExpenseAt(ctx, 'pendingManager');
+
+      const approved = await ctx
+        .as('ahmet')
+        .post(`/approvals/manager/${id}/approve`);
+      expect(approved.status).toBe(200);
+      expect(approved.body.status).toBe('PENDING_ACCOUNTING');
+
+      const afterwards = await ctx.as('ahmet').get(`/expenses/${id}`);
+      expect(afterwards.status).toBe(404);
     });
 
     it.each([
@@ -138,8 +153,9 @@ describe('Workflow rules (e2e)', () => {
         ctx.as('ahmet').post(url),
       ]);
 
+      // The losing request finds the expense already out of the manager's scope.
       expect(responses.map((r) => r.status).sort((a, b) => a - b)).toEqual([
-        200, 409,
+        200, 404,
       ]);
       const detail = await ctx.as('ali').get(`/expenses/${id}`);
       const approvals = detail.body.history.filter(

@@ -16,10 +16,10 @@ export function visibleExpensesWhere(user: AuthUser): Prisma.ExpenseWhereInput {
       return { ownerId: user.id };
 
     case Role.MANAGER:
-      // Drafts stay private to their owner until submitted.
+      // Only their own team's expenses that are waiting for them (case 3.1).
       return {
         owner: { managerId: user.id },
-        status: { not: ExpenseStatus.DRAFT },
+        status: ExpenseStatus.PENDING_MANAGER,
       };
 
     case Role.ACCOUNTING:

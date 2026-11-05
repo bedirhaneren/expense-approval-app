@@ -20,10 +20,10 @@ describe('visibleExpensesWhere', () => {
     });
   });
 
-  it("limits managers to their team's submitted expenses", () => {
+  it("limits managers to their team's expenses awaiting their approval", () => {
     expect(visibleExpensesWhere(userWithRole(Role.MANAGER))).toEqual({
       owner: { managerId: 'user-1' },
-      status: { not: ExpenseStatus.DRAFT },
+      status: ExpenseStatus.PENDING_MANAGER,
     });
   });
 
